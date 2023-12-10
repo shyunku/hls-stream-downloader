@@ -1,5 +1,5 @@
 {
-    "name": "node-hls-downloader",
+    "name": "node-hls-stream-downloader",
     "version": "2.2.0",
     "description": "Download HLS streams.",
     "main": "dist/index.js",
@@ -15,7 +15,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Spark-NF/hls-downloader.git"
+        "url": "git+https://github.com/shyunku/hls-stream-downloader.git"
     },
     "author": "Spark-NF <spark_ps@hotmail.fr>",
     "license": "Apache-2.0",
