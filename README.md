@@ -37,6 +37,9 @@ await download({
   concurrency: 5,
   outputFile: "video.mp4",
   streamUrl: "https://......./stream.m3u8",
+  onStartCallback: () => console.log("Download started"),
+  onProgressCallback: (uri) => console.log(`Segment downloaded: ${uri}`),
+  onEndCallback: () => console.log("Download finished"),
 });
 ```
 
