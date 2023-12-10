@@ -1,6 +1,6 @@
 {
     "name": "node-hls-stream-downloader",
-    "version": "2.2.0",
+    "version": "2.2.1",
     "description": "Download HLS streams.",
     "main": "dist/index.js",
     "types": "dist/src/index.d.ts",
