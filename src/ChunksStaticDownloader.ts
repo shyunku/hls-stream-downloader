@@ -12,7 +12,7 @@ export class ChunksStaticDownloader extends ChunksDownloader {
         segmentDirectory: string,
         httpHeaders?: HttpHeaders,
         onStartCallback?: (totalSegments: number) => void | null,
-        onProgressCallback?: (uri: string) => void | null,
+        onProgressCallback?: (current: number, total: number) => void | null,
         onEndCallback?: () => void | null
     ) {
         super(
@@ -32,13 +32,15 @@ export class ChunksStaticDownloader extends ChunksDownloader {
         const playlist = await this.loadPlaylist();
         const segments = playlist.segments!.map((s) => new URL(s.uri, this.playlistUrl).href);
 
-    this.onStartCallback!(segments.length);
-    this.logger.log(`Queueing ${segments.length} segment(s)`);
-    for (const uri of segments) {
-        this.queue.add(() => this.downloadSegment(uri));
-    }
+        this.current = 0;
+        this.total = segments.length;
+        this.onStartCallback && this.onStartCallback(segments.length);
+        this.logger.log(`Queueing ${segments.length} segment(s)`);
+        for (const uri of segments) {
+            this.queue.add(() => this.downloadSegment(uri));
+        }
 
-    this.queue.onIdle().then(() => this.finished());
+        this.queue.onIdle().then(() => this.finished());
     }
 
     private finished(): void {

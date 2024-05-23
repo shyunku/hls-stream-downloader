@@ -16,6 +16,6 @@ export interface IConfig {
   httpHeaders?: HttpHeaders;
   logger?: ILogger | ((...params: any) => void) | null;
   onStartCallback?: (totalSegments: number) => void | null;
-  onProgressCallback?: (uri: string) => void | null;
+  onProgressCallback?: (current: number, total: number) => void | null;
   onEndCallback?: () => void | null;
 }

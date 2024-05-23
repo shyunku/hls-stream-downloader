@@ -20,7 +20,7 @@ export class ChunksLiveDownloader extends ChunksDownloader {
     private playlistRefreshInterval: number = 5,
     httpHeaders?: HttpHeaders,
     onStartCallback?: (totalSegments: number) => void | null,
-    onProgressCallback?: (uri: string) => void | null,
+    onProgressCallback?: (current: number, total: number) => void | null,
     onEndCallback?: () => void | null
     ) {
         super(
@@ -42,6 +42,8 @@ export class ChunksLiveDownloader extends ChunksDownloader {
         const interval = playlist.targetDuration || this.playlistRefreshInterval;
         const segments = playlist.segments!.map((s) => new URL(s.uri, this.playlistUrl).href);
 
+        this.current = 0;
+        this.total = segments.length;
         this.onStartCallback && this.onStartCallback(segments.length);
         this.refreshHandle = setTimeout(() => this.refreshPlayList(), interval * 1000);
 
