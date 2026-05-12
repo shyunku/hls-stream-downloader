@@ -1,13 +1,14 @@
 <h1 align="center">HLS Stream downloader</h1>
 
-[![NPM version](https://img.shields.io/npm/v/node-hls-downloader.svg)](https://www.npmjs.com/package/node-hls-downloader)
+[![NPM version](https://img.shields.io/npm/v/node-hls-stream-downloader.svg)](https://www.npmjs.com/package/node-hls-downloader)
 [![Build Status](https://travis-ci.org/Spark-NF/hls-downloader.svg?branch=master)](https://travis-ci.org/Spark-NF/hls-downloader)
 [![Code Coverage](https://img.shields.io/codecov/c/github/Spark-NF/hls-downloader.svg)](https://codecov.io/gh/Spark-NF/hls-downloader)
 [![Project license](https://img.shields.io/github/license/Spark-NF/hls-downloader.svg)](https://raw.githubusercontent.com/Spark-NF/hls-downloader/master/LICENSE)
 
 ## About
 
-Downloads a live HLS stream. This is not original repository, but forked from Spark-NF/hls-downloader.
+Downloads an HLS stream. MPEG-TS and fragmented MP4 HLS playlists are supported.
+This is not original repository, but forked from Spark-NF/hls-downloader.
 
 ## Usage
 
@@ -25,7 +26,7 @@ hls-downloader -q best -c 5 -o video.mp4 "https://......./stream.m3u8"
 
 ### Dependencies
 
-You need to have [FFMPEG](https://ffmpeg.org/) installed, even with the "merge using FFMPEG" feature disabled, as FFMPEG is still used to transmux the merged TS file into an MP4 file.
+You need to have [FFMPEG](https://ffmpeg.org/) installed, even with the "merge using FFMPEG" feature disabled, as FFMPEG is still used to write the final MP4 file.
 
 ### API
 
@@ -47,11 +48,12 @@ TypeScript is also supported, with types already provided.
 
 ### Options
 
-_Note: options marked with 🔒 are mandatory._
+_Note: options marked with \* are mandatory._
 
-#### `stream_url`, `streamUrl` 🔒
+#### `stream_url`, `streamUrl` \*
 
 The URL to the stream (either the master file or a playlist).
+This must be an HLS `.m3u8` URL. DASH `.mpd` manifests are not supported.
 
 #### `--live`, `live`
 
@@ -64,6 +66,7 @@ Automatically stops when no new segments are found after a while.
 
 Merge TS segments using FFMPEG instead of basic concatenation.
 Not recommended, but you can use it if stuttering issues occur when merging the TS segments.
+Fragmented MP4 HLS segments are always merged by basic concatenation before the final MP4 remux step.
 
 - Default: `false`
 
@@ -75,13 +78,13 @@ Path to the FFMPEG binary. Can be useful to target a specific version or install
 
 #### `--segments-dir`, `segmentsDir`
 
-Where the TS segments will be stored.
+Where the downloaded media segments will be stored.
 
 - Default: a temporary directory
 
 #### `--merged-segments-file`, `mergedSegmentsFile`
 
-Location of the merged TS segments file.
+Location of the merged media segment file.
 
 - Default: a temporary file
 
@@ -97,13 +100,13 @@ How many times to retry when failing to download segments.
 
 - Default: `1`
 
-#### `-q`, `--quality`, `quality` 🔒\*
+#### `-q`, `--quality`, `quality` \*\*
 
 Stream quality: `worst`, `best`, or max bandwidth.
 
 _\* only mandatory if passing a master playlist stream URL_
 
-#### `-o`, `--output-file`, `outputFile` 🔒
+#### `-o`, `--output-file`, `outputFile` \*
 
 Target file to download the stream to.
 If it already exists, it will be overwritten.

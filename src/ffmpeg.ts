@@ -59,3 +59,13 @@ export async function transmuxTsToMp4(logger: ILogger, ffmpegPath: string, input
         outputFile,
     ]);
 }
+
+export async function remuxMp4(logger: ILogger, ffmpegPath: string, inputFile: string, outputFile: string): Promise<void> {
+    await spawnFfmpeg(logger, ffmpegPath, [
+        "-y",
+        "-loglevel", "warning",
+        "-i", inputFile,
+        "-c", "copy",
+        outputFile,
+    ]);
+}

@@ -4,7 +4,7 @@ import * as path from "path";
 import { ChunksLiveDownloader } from "./ChunksLiveDownloader";
 import { ChunksStaticDownloader } from "./ChunksStaticDownloader";
 import { IConfig as IIConfig } from "./Config";
-import { mergeChunks as mergeChunksFfmpeg, transmuxTsToMp4 } from "./ffmpeg";
+import { mergeChunks as mergeChunksFfmpeg, remuxMp4, transmuxTsToMp4 } from "./ffmpeg";
 import { mergeFiles as mergeChunksStream } from "./stream";
 import { StreamChooser } from "./StreamChooser.js";
 import { buildLogger, ILogger } from "./Logger";
@@ -65,19 +65,27 @@ export async function download(config: IConfig): Promise<void> {
   await chunksDownloader.start();
 
   // Get all segments
-  const segments = fs.readdirSync(segmentsDir).map((f) => segmentsDir + f);
+  let segments = chunksDownloader.getDownloadedFiles();
+  if (segments.length === 0) {
+    segments = fs.readdirSync(segmentsDir).map((f) => path.join(segmentsDir, f));
+  }
   segments.sort((a: string, b: string) => {
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
   });
 
-  // Merge TS files
-  const mergeFunction = config.mergeUsingFfmpeg
+  // Merge downloaded media fragments
+  const isFragmentedMp4 = chunksDownloader.isFragmentedMp4();
+  const mergeFunction = config.mergeUsingFfmpeg && !isFragmentedMp4
     ? (segments: string[], merged: string) => mergeChunksFfmpeg(logger, ffmpegPath, segments, merged)
     : mergeChunksStream;
   await mergeFunction(segments, mergedSegmentsFile);
 
-  // Transmux
-  await transmuxTsToMp4(logger, ffmpegPath, mergedSegmentsFile, config.outputFile);
+  // Normalize output container
+  if (isFragmentedMp4) {
+    await remuxMp4(logger, ffmpegPath, mergedSegmentsFile, config.outputFile);
+  } else {
+    await transmuxTsToMp4(logger, ffmpegPath, mergedSegmentsFile, config.outputFile);
+  }
 
   // Delete temporary files
   fs.remove(segmentsDir);

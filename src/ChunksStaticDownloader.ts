@@ -1,4 +1,3 @@
-import { URL } from "url";
 import { ChunksDownloader } from "./ChunksDownloader";
 import { HttpHeaders } from "./http";
 import { ILogger } from "./Logger";
@@ -30,22 +29,22 @@ export class ChunksStaticDownloader extends ChunksDownloader {
 
     protected async refreshPlayList(): Promise<void> {
         const playlist = await this.loadPlaylist();
-        const segments = playlist.segments!.map((s) => new URL(s.uri, this.playlistUrl).href);
+        const segments = this.createDownloadJobs(playlist.segments!);
 
         this.current = 0;
         this.total = segments.length;
         this.onStartCallback && this.onStartCallback(segments.length);
         this.logger.log(`Queueing ${segments.length} segment(s)`);
-        for (const uri of segments) {
-            this.queue.add(() => this.downloadSegment(uri));
-        }
+        segments.forEach((segment, index) => {
+            this.queue.add(() => this.downloadSegment(segment, index));
+        });
 
         this.queue.onIdle().then(() => this.finished());
     }
 
     private finished(): void {
         this.logger.log("All segments received, stopping");
-    this.onEndCallback!();
-    this.resolve!();
+        this.onEndCallback && this.onEndCallback();
+        this.resolve!();
     }
 }

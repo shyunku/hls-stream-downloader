@@ -1,4 +1,4 @@
-import { URL } from "url";
+import * as m3u8 from "m3u8-parser";
 import { ChunksDownloader } from "./ChunksDownloader";
 import { HttpHeaders } from "./http";
 import { ILogger } from "./Logger";
@@ -40,22 +40,23 @@ export class ChunksLiveDownloader extends ChunksDownloader {
         const playlist = await this.loadPlaylist();
 
         const interval = playlist.targetDuration || this.playlistRefreshInterval;
-        const segments = playlist.segments!.map((s) => new URL(s.uri, this.playlistUrl).href);
+        const segments = playlist.segments!;
+        const segmentKeys = segments.map((s) => this.getSegmentIdentity(s));
 
         this.current = 0;
-        this.total = segments.length;
-        this.onStartCallback && this.onStartCallback(segments.length);
+        this.total = segmentKeys.length;
+        this.onStartCallback && this.onStartCallback(segmentKeys.length);
         this.refreshHandle = setTimeout(() => this.refreshPlayList(), interval * 1000);
 
-        let toLoad: string[] = [];
+        let toLoad: m3u8.ManifestSegment[] = [];
         if (!this.lastSegment) {
             toLoad = segments.slice(segments.length - this.fromEnd);
         } else {
-            const index = segments.indexOf(this.lastSegment);
+            const index = segmentKeys.indexOf(this.lastSegment);
             if (index < 0) {
                 this.logger.error("Could not find last segment in playlist");
                 toLoad = segments;
-            } else if (index === segments.length - 1) {
+            } else if (index === segmentKeys.length - 1) {
                 this.logger.log("No new segments since last check");
                 return;
             } else {
@@ -63,11 +64,14 @@ export class ChunksLiveDownloader extends ChunksDownloader {
             }
         }
 
-        this.lastSegment = toLoad[toLoad.length - 1];
-        for (const uri of toLoad) {
-            this.logger.log("Queued:", uri);
-            this.queue.add(() => this.downloadSegment(uri));
-        }
+        this.lastSegment = this.getSegmentIdentity(toLoad[toLoad.length - 1]);
+        const startIndex = this.downloadedFiles.length;
+        const jobs = this.createDownloadJobs(toLoad, startIndex);
+
+        jobs.forEach((job, index) => {
+            this.logger.log("Queued:", job.uri);
+            this.queue.add(() => this.downloadSegment(job, startIndex + index));
+        });
 
         // Timeout after X seconds without new segment
         if (this.timeoutHandle) {
@@ -81,7 +85,7 @@ export class ChunksLiveDownloader extends ChunksDownloader {
         if (this.refreshHandle) {
             clearTimeout(this.refreshHandle);
         }
-    this.onEndCallback!();
-    this.resolve!();
+        this.onEndCallback && this.onEndCallback();
+        this.resolve!();
     }
 }

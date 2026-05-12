@@ -4,7 +4,7 @@ jest.mock("fs");
 import * as cp from "child_process";
 import { EventEmitter } from "events";
 import * as fs from "fs";
-import { spawnFfmpeg, mergeChunks, transmuxTsToMp4 } from "../src/ffmpeg";
+import { spawnFfmpeg, mergeChunks, remuxMp4, transmuxTsToMp4 } from "../src/ffmpeg";
 
 describe("ffmpeg", () => {
     const logger = {
@@ -104,6 +104,20 @@ describe("ffmpeg", () => {
                 "-i", "input-file",
                 "-c", "copy",
                 "-bsf:a", "aac_adtstoasc",
+                "output-file",
+            ]);
+        });
+    });
+
+    describe("remuxMp4", () => {
+        it("Should spawn a FFMPEG process without TS bitstream filters", async () => {
+            await wrapFfmpeg(() => remuxMp4(logger, "my-ffmpeg", "input-file", "output-file"));
+
+            expect(cp.spawn).toHaveBeenCalledWith("my-ffmpeg", [
+                "-y",
+                "-loglevel", "warning",
+                "-i", "input-file",
+                "-c", "copy",
                 "output-file",
             ]);
         });

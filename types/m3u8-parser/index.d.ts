@@ -1,6 +1,18 @@
 declare module "m3u8-parser" {
+    interface ByteRange {
+        length: number;
+        offset?: number;
+    }
+
+    interface SegmentMap {
+        uri: string;
+        byterange?: ByteRange;
+    }
+
     interface ManifestSegment {
         uri: string;
+        byterange?: ByteRange;
+        map?: SegmentMap;
     }
 
     interface ManifestPlaylist {
